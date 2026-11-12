@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "blocks": [
+    {
+      "id": "notice-hours",
+      "type": "notice",
+      "data": { "text": "Koramangala store open till 11 pm this week." }
+    },
+    {
+      "id": "banner-weekend",
+      "type": "banner",
+      "data": {
+        "title": "Weekend staples sale",
+        "subtitle": "Up to 20% off on atta, rice and dals",
+        "imageUrl": "https://picsum.photos/seed/staples/1200/500",
+        "deeplink": "product/p2"
+      }
+    },
+    {
+      "id": "carousel-categories",
+      "type": "carousel",
+      "data": {
+        "title": "Shop by category",
+        "items": [
+          { "title": "Fruits", "imageUrl": "https://picsum.photos/seed/fruits/300/300", "deeplink": "product/p6" },
+          { "title": "Dairy", "imageUrl": "https://picsum.photos/seed/dairy/300/300", "deeplink": "product/p1" },
+          { "title": "Vegetables", "imageUrl": "https://picsum.photos/seed/veg/300/300", "deeplink": "product/p4" },
+          { "title": "Beverages", "imageUrl": "https://picsum.photos/seed/bev/300/300", "deeplink": "product/p5" }
+        ]
+      }
+    },
+    {
+      "id": "grid-daily",
+      "type": "product_grid",
+      "data": { "title": "Daily essentials", "productIds": ["p1", "p4", "p6", "p2"] }
+    },
+    {
+      "id": "banner-diwali",
+      "type": "banner",
+      "startsAt": "2026-10-01T00:00:00Z",
+      "endsAt": "2026-10-31T23:59:59Z",
+      "data": { "title": "Diwali sweets", "subtitle": "This block is scheduled and has already expired", "imageUrl": "", "deeplink": null }
+    },
+    {
+      "id": "future-video",
+      "type": "video_reel",
+      "data": { "url": "https://example.com/reel.mp4" }
+    }
+  ]
+}

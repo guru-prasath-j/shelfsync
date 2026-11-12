@@ -1,0 +1,26 @@
+name: shelfsync
+description: CMS-driven, offline-first retail catalogue app (server-driven UI, ETag caching, offline cart sync).
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.6.0 <4.0.0'  # Flutter 3.27+
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.5.1
+  dio: ^5.7.0
+  hive_ce: ^2.6.0
+  hive_ce_flutter: ^2.1.0
+  connectivity_plus: ^6.0.5
+  cached_network_image: ^3.4.1
+  uuid: ^4.5.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

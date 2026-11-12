@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShelfSync CMS</title>
+<style>
+  :root { color-scheme: light dark; --leaf: #1F6F43; --ink: #1B1F1A; --muted: #5E6B60; --line: #D5DED7; --bg: #FFFFFF; }
+  @media (prefers-color-scheme: dark) { :root { --ink: #E8EEE9; --muted: #A3B0A6; --line: #2F3A32; --bg: #121613; } }
+  body { margin: 0; font: 15px/1.5 system-ui, sans-serif; color: var(--ink); background: var(--bg); }
+  main { max-width: 860px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p { color: var(--muted); margin: 0 0 16px; }
+  textarea { width: 100%; box-sizing: border-box; height: 60vh; font: 13px/1.45 ui-monospace, monospace; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: inherit; }
+  button { margin-top: 12px; padding: 10px 18px; border: 0; border-radius: 8px; background: var(--leaf); color: #fff; font-weight: 600; cursor: pointer; }
+  button:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+  #status { margin-left: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Home screen layout</h1>
+  <p>Edit blocks and publish. Apps pick up the change on their next refresh, with no store release.</p>
+  <textarea id="layout" spellcheck="false" aria-label="Home layout JSON"></textarea>
+  <button id="publish">Publish</button><span id="status" role="status"></span>
+</main>
+<script>
+  const box = document.getElementById('layout');
+  const status = document.getElementById('status');
+  fetch('/api/layout/home').then(r => r.json()).then(j => {
+    // Show the editable source: product grids keep productIds, drop the expanded products.
+    j.blocks.forEach(b => { if (b.type === 'product_grid' && b.data) delete b.data.products; });
+    box.value = JSON.stringify(j, null, 2);
+  });
+  document.getElementById('publish').onclick = async () => {
+    try { JSON.parse(box.value); } catch (e) { status.textContent = 'Invalid JSON: ' + e.message; return; }
+    const r = await fetch('/api/admin/layout/home', { method: 'PUT', body: box.value });
+    status.textContent = r.ok ? 'Published.' : 'Publish failed: ' + (await r.json()).error;
+  };
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+[
+  { "id": "p1", "name": "Nandini Toned Milk", "unit": "500 ml", "price": 27, "mrp": 28, "imageUrl": "https://picsum.photos/seed/milk/400/400", "inStock": true },
+  { "id": "p2", "name": "Whole Wheat Atta", "unit": "5 kg", "price": 239, "mrp": 285, "imageUrl": "https://picsum.photos/seed/atta/400/400", "inStock": true },
+  { "id": "p3", "name": "Sona Masoori Rice", "unit": "5 kg", "price": 349, "mrp": 420, "imageUrl": "https://picsum.photos/seed/rice/400/400", "inStock": true },
+  { "id": "p4", "name": "Fresh Tomatoes", "unit": "1 kg", "price": 38, "mrp": 45, "imageUrl": "https://picsum.photos/seed/tomato/400/400", "inStock": true },
+  { "id": "p5", "name": "Filter Coffee Powder", "unit": "200 g", "price": 145, "mrp": 160, "imageUrl": "https://picsum.photos/seed/coffee/400/400", "inStock": false },
+  { "id": "p6", "name": "Bananas (Yelakki)", "unit": "1 kg", "price": 72, "mrp": 80, "imageUrl": "https://picsum.photos/seed/banana/400/400", "inStock": true }
+]

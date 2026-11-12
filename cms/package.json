@@ -1,0 +1,12 @@
+{
+  "name": "shelfsync-cms",
+  "version": "1.0.0",
+  "description": "Zero-dependency mock headless CMS for ShelfSync: layout + catalog + idempotent cart ops, with ETag support.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=20" }
+}
