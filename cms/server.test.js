@@ -106,6 +106,16 @@ test('changing the password signs out old sessions', async () => {
   assert.strictEqual(login.status, 200);
 });
 
+test('If-None-Match accepts the weak W/ form a CDN sends back', async () => {
+  const etag = (await fetch(`${base}/api/layout/home`)).headers.get('etag');
+  const weak = await fetch(`${base}/api/layout/home`, { headers: { 'If-None-Match': `W/${etag}` } });
+  assert.strictEqual(weak.status, 304);
+  const list = await fetch(`${base}/api/layout/home`, { headers: { 'If-None-Match': `"other", W/${etag}` } });
+  assert.strictEqual(list.status, 304);
+  const other = await fetch(`${base}/api/layout/home`, { headers: { 'If-None-Match': 'W/"nope"' } });
+  assert.strictEqual(other.status, 200);
+});
+
 test('publishing a layout changes the ETag', async () => {
   const before = (await fetch(`${base}/api/layout/home`)).headers.get('etag');
   const layout = JSON.parse(fs.readFileSync(path.join(tmp, 'home.json'), 'utf8'));

@@ -91,13 +91,22 @@ function etagFor(body) {
   return '"' + crypto.createHash('sha1').update(body).digest('hex').slice(0, 16) + '"';
 }
 
+// If-None-Match uses weak comparison (RFC 9110 §13.1.2): proxies such as
+// Render's CDN compress responses and turn our ETag into W/"…", and clients
+// send that back. Ignore the W/ prefix and accept lists and "*".
+function etagMatches(header, etag) {
+  if (!header) return false;
+  const opaque = (t) => t.trim().replace(/^W\//, '');
+  return header.split(',').some((t) => t.trim() === '*' || opaque(t) === opaque(etag));
+}
+
 function sendJson(req, res, status, value) {
   const body = JSON.stringify(value);
   if (req.method === 'GET' && status === 200) {
     const etag = etagFor(body);
     res.setHeader('ETag', etag);
     res.setHeader('Cache-Control', 'no-cache');
-    if (req.headers['if-none-match'] === etag) {
+    if (etagMatches(req.headers['if-none-match'], etag)) {
       res.writeHead(304);
       return res.end();
     }
