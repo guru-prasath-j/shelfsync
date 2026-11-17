@@ -6,6 +6,7 @@ const path = require('node:path');
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shelfsync-'));
 for (const f of ['home.json', 'products.json']) fs.copyFileSync(path.join(__dirname, 'content', f), path.join(tmp, f));
+fs.cpSync(path.join(__dirname, 'content', 'images'), path.join(tmp, 'images'), { recursive: true });
 process.env.CONTENT_DIR = tmp;
 process.env.DATA_DIR = path.join(tmp, 'data');
 const web = path.join(tmp, 'web');
@@ -41,6 +42,26 @@ test('layout embeds products for product_grid blocks', async () => {
     const expected = grid.data.productIds.filter((id) => known.has(id));
     assert.deepStrictEqual(grid.data.products.map((p) => p.id), expected);
     assert.ok(grid.data.products.every((p) => typeof p.price === 'number'));
+  }
+});
+
+test('local product images are served and returned as absolute URLs', async () => {
+  const products = await (await fetch(`${base}/api/products`)).json();
+  for (const p of products) {
+    assert.match(p.imageUrl, new RegExp(`^${base}/images/[\\w.-]+\\.jpg$`), p.name);
+    const img = await fetch(p.imageUrl);
+    assert.strictEqual(img.status, 200, p.imageUrl);
+    assert.strictEqual(img.headers.get('content-type'), 'image/jpeg');
+  }
+  const layout = await (await fetch(`${base}/api/layout/home`)).json();
+  const banner = layout.blocks.find((b) => b.type === 'banner' && b.data.imageUrl);
+  assert.ok(banner.data.imageUrl.startsWith(`${base}/images/`));
+  assert.strictEqual((await fetch(`${base}/images/nope.jpg`)).status, 404);
+  assert.strictEqual((await fetch(`${base}/images/..%2fhome.json`)).status, 404);
+  // Every image in content has a credit line.
+  const credits = fs.readFileSync(path.join(__dirname, 'content', 'images', 'CREDITS.md'), 'utf8');
+  for (const f of fs.readdirSync(path.join(__dirname, 'content', 'images')).filter((f) => f.endsWith('.jpg'))) {
+    assert.ok(credits.includes(`\`${f}\``), `credit for ${f}`);
   }
 });
 
@@ -156,6 +177,9 @@ test('serves the web app at / with app-route fallback, and stays inside WEB_DIR'
   const js = await fetch(`${base}/main.dart.js`);
   assert.strictEqual(js.status, 200);
   assert.match(js.headers.get('content-type'), /javascript/);
+  assert.strictEqual(js.headers.get('cache-control'), 'no-cache', 'a new deploy is picked up');
+  const again = await fetch(`${base}/main.dart.js`, { headers: { 'If-Modified-Since': js.headers.get('last-modified') } });
+  assert.strictEqual(again.status, 304, 'unchanged file revalidates cheaply');
 
   assert.strictEqual((await fetch(`${base}/assets/logo.png`)).headers.get('content-type'), 'image/png');
   assert.match(await (await fetch(`${base}/cart`)).text(), /ShelfSync app/, 'app route falls back to index.html');

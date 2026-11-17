@@ -19,7 +19,7 @@
       "data": {
         "title": "Mega Rice Festival",
         "subtitle": "Sona Masoori 5 kg at 349 - save 71",
-        "imageUrl": "",
+        "imageUrl": "/images/banner-rice.jpg",
         "deeplink": "product/p3"
       }
     },
@@ -45,7 +45,7 @@
       "data": {
         "title": "Weekend staples sale",
         "subtitle": "Up to 20% off on atta, rice and dals",
-        "imageUrl": "https://picsum.photos/seed/staples/1200/500",
+        "imageUrl": "/images/banner-staples.jpg",
         "deeplink": "product/p2"
       }
     },
@@ -57,22 +57,22 @@
         "items": [
           {
             "title": "Fruits",
-            "imageUrl": "https://picsum.photos/seed/fruits/300/300",
+            "imageUrl": "/images/cat-fruits.jpg",
             "deeplink": "product/p6"
           },
           {
             "title": "Dairy",
-            "imageUrl": "https://picsum.photos/seed/dairy/300/300",
+            "imageUrl": "/images/cat-dairy.jpg",
             "deeplink": "product/p1"
           },
           {
             "title": "Vegetables",
-            "imageUrl": "https://picsum.photos/seed/veg/300/300",
+            "imageUrl": "/images/cat-vegetables.jpg",
             "deeplink": "product/p4"
           },
           {
             "title": "Beverages",
-            "imageUrl": "https://picsum.photos/seed/bev/300/300",
+            "imageUrl": "/images/cat-beverages.jpg",
             "deeplink": "product/p5"
           }
         ]
@@ -99,7 +99,7 @@
       "data": {
         "title": "Diwali sweets",
         "subtitle": "This block is scheduled and has already expired",
-        "imageUrl": "",
+        "imageUrl": "/images/banner-sweets.jpg",
         "deeplink": null
       }
     },

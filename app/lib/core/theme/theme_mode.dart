@@ -34,7 +34,11 @@ Future<void> showThemePicker(BuildContext context, WidgetRef ref) {
       builder: (context, ref, _) {
         final current = ref.watch(themeModeProvider);
         Widget option(
-                ThemeMode mode, IconData icon, String label, String hint,) =>
+          ThemeMode mode,
+          IconData icon,
+          String label,
+          String hint,
+        ) =>
             ListTile(
               leading: Icon(icon),
               title: Text(label),
@@ -62,12 +66,24 @@ Future<void> showThemePicker(BuildContext context, WidgetRef ref) {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
-              option(ThemeMode.light, Icons.light_mode_outlined, 'Light',
-                  'Bright background',),
-              option(ThemeMode.dark, Icons.dark_mode_outlined, 'Dark',
-                  'Easier on the eyes at night',),
-              option(ThemeMode.system, Icons.brightness_auto_outlined,
-                  'Same as phone', 'Follows your phone\'s setting',),
+              option(
+                ThemeMode.light,
+                Icons.light_mode_outlined,
+                'Light',
+                'Bright background',
+              ),
+              option(
+                ThemeMode.dark,
+                Icons.dark_mode_outlined,
+                'Dark',
+                'Easier on the eyes at night',
+              ),
+              option(
+                ThemeMode.system,
+                Icons.brightness_auto_outlined,
+                'Same as phone',
+                'Follows your phone\'s setting',
+              ),
               const SizedBox(height: 8),
             ],
           ),

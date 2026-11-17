@@ -62,6 +62,29 @@ shelfsync/
    cd ../cms && npm test
    ```
 
+## Payments (Razorpay)
+
+Checkout uses Razorpay (test mode for now). The app sends only product ids and
+quantities to `POST /api/checkout/orders`; the CMS prices them from
+`products.json`, rejects out-of-stock items and creates a Razorpay order. The
+app opens the CMS page `/pay/<id>`, which runs Razorpay Checkout (UPI, cards,
+net banking). The page posts the result to `/api/checkout/verify`, where the
+CMS checks Razorpay's HMAC-SHA256 signature with the key secret; only then is
+the order `paid`. The app polls the order, then shows the receipt and empties
+the cart.
+
+Keys come only from the environment: `RAZORPAY_KEY_ID` and
+`RAZORPAY_KEY_SECRET` (Razorpay Dashboard → Test Mode → API Keys). Locally,
+copy `cms/.env.example` to `cms/.env` (git-ignored); on Render, set them in the
+service's Environment tab. Without keys, checkout says payment isn't set up.
+Orders are kept in memory, so they reset when the CMS restarts.
+
+## Product images
+
+Photos are in `cms/content/images/` and referenced as `/images/<file>`; the CMS
+turns them into full URLs for the requesting host. Sources and licenses are in
+[`cms/content/images/CREDITS.md`](cms/content/images/CREDITS.md).
+
 ## Deploy the CMS on Render
 
 The CMS also serves the shopper app's Flutter web build from `cms/web/` at

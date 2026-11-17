@@ -8,6 +8,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const { createPayments } = require('./payments');
 
 const CONTENT_DIR = process.env.CONTENT_DIR || path.join(__dirname, 'content');
 // Admin password hash lives outside content/ and is git-ignored.
@@ -33,6 +34,42 @@ const MIME = {
   '.bin': 'application/octet-stream',
   '.frag': 'application/octet-stream',
 };
+
+// --- Product/banner photos live with the content in CONTENT_DIR/images and
+// are referenced as "/images/<file>". Apps need absolute URLs (the phone app
+// has no page origin), so responses rewrite them against the request origin.
+const IMAGE_TYPES = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
+
+function serveImage(res, name) {
+  const type = IMAGE_TYPES[path.extname(name).toLowerCase()];
+  const file = path.join(CONTENT_DIR, 'images', name);
+  if (!type || !/^[\w.-]+$/.test(name) || !fs.existsSync(file)) {
+    res.writeHead(404);
+    return res.end();
+  }
+  res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'public, max-age=86400' });
+  fs.createReadStream(file).pipe(res);
+}
+
+function requestOrigin(req) {
+  const proxied = process.env.TRUST_PROXY === '1';
+  const first = (h) => String(h || '').split(',')[0].trim();
+  const proto = (proxied && first(req.headers['x-forwarded-proto'])) || 'http';
+  const host = (proxied && first(req.headers['x-forwarded-host'])) || req.headers.host || 'localhost';
+  return `${proto}://${host}`;
+}
+
+function withAbsoluteImages(value, origin) {
+  if (Array.isArray(value)) return value.map((v) => withAbsoluteImages(v, origin));
+  if (!value || typeof value !== 'object') return value;
+  const out = {};
+  for (const [k, v] of Object.entries(value)) {
+    out[k] = k === 'imageUrl' && typeof v === 'string' && v.startsWith('/') && !v.startsWith('//')
+      ? origin + v
+      : withAbsoluteImages(v, origin);
+  }
+  return out;
+}
 
 /// Serves a file from WEB_DIR; unknown extension-less paths fall back to
 /// index.html (app routes). Returns false when there is no web build.
@@ -62,10 +99,20 @@ function serveWeb(req, res, p) {
     }
     file = index;
   }
+  // Flutter's file names (main.dart.js…) don't change between builds, so
+  // browsers must revalidate everything or they'd keep running an old app
+  // after a deploy. Last-Modified makes the revalidation a cheap 304.
+  const lastModified = fs.statSync(file).mtime.toUTCString();
+  const since = Date.parse(req.headers['if-modified-since'] || '');
+  if (!Number.isNaN(since) && Math.floor(fs.statSync(file).mtimeMs / 1000) * 1000 <= since) {
+    res.writeHead(304, { 'Last-Modified': lastModified, 'Cache-Control': 'no-cache' });
+    res.end();
+    return true;
+  }
   res.writeHead(200, {
     'Content-Type': MIME[path.extname(file)] || 'application/octet-stream',
-    // index.html must revalidate so a new deploy is picked up; assets can cache briefly.
-    'Cache-Control': file === index ? 'no-cache' : 'public, max-age=3600',
+    'Cache-Control': 'no-cache',
+    'Last-Modified': lastModified,
   });
   if (req.method === 'HEAD') {
     res.end();
@@ -205,6 +252,7 @@ function createServer() {
   const sessions = new Map(); // token -> expiresAt (ms)
   const failures = new Map(); // client address -> { count, lockedUntil }
   let globalFailures = { count: 0, windowStart: 0 };
+  const payments = createPayments({ readJson, sendJson, readJsonBody });
 
   function newSession() {
     const token = crypto.randomBytes(32).toString('hex');
@@ -228,17 +276,25 @@ function createServer() {
     const p = url.pathname;
     try {
       if (p.startsWith('/api/admin/')) return await handleAdmin(req, res, p);
+      const origin = requestOrigin(req);
+      const paid = payments.handle(req, res, p, origin);
+      if (paid) return await paid;
       if (req.method === 'GET' && p === '/api/layout/home') {
-        return sendJson(req, res, 200, resolveLayout(readJson('home.json'), readJson('products.json')));
+        const layout = resolveLayout(readJson('home.json'), readJson('products.json'));
+        return sendJson(req, res, 200, withAbsoluteImages(layout, origin));
       }
       if (req.method === 'GET' && p === '/api/products') {
-        return sendJson(req, res, 200, readJson('products.json'));
+        return sendJson(req, res, 200, withAbsoluteImages(readJson('products.json'), origin));
       }
       const productMatch = p.match(/^\/api\/products\/([\w-]+)$/);
       if (req.method === 'GET' && productMatch) {
         const product = readJson('products.json').find((x) => x.id === productMatch[1]);
-        return product ? sendJson(req, res, 200, product) : sendJson(req, res, 404, { error: 'Product not found' });
+        return product
+          ? sendJson(req, res, 200, withAbsoluteImages(product, origin))
+          : sendJson(req, res, 404, { error: 'Product not found' });
       }
+      const imageMatch = p.match(/^\/images\/([^/]+)$/);
+      if ((req.method === 'GET' || req.method === 'HEAD') && imageMatch) return serveImage(res, imageMatch[1]);
       if (req.method === 'POST' && p === '/api/cart/ops') {
         const { ops } = JSON.parse((await readBody(req)) || '{}');
         if (!Array.isArray(ops)) return sendJson(req, res, 400, { error: 'Body must be { ops: [...] }' });
@@ -369,9 +425,24 @@ function createServer() {
 
 module.exports = { createServer, etagFor, resolveLayout };
 
+// Local secrets (e.g. Razorpay test keys) can live in cms/.env, which is
+// git-ignored. Real environment variables always win. Hosts like Render set
+// them in their dashboard instead.
+function loadDotEnv(file = path.join(__dirname, '.env')) {
+  if (!fs.existsSync(file)) return;
+  for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+    const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/.exec(line);
+    if (m && !line.trim().startsWith('#') && process.env[m[1]] === undefined) {
+      process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
+    }
+  }
+}
+
 if (require.main === module) {
+  loadDotEnv();
   const port = Number(process.env.PORT || 4000);
   createServer().listen(port, () => {
-    console.log(`ShelfSync CMS on http://localhost:${port}  (admin: /admin)`);
+    const pay = process.env.RAZORPAY_KEY_ID ? `Razorpay ${process.env.RAZORPAY_KEY_ID.slice(0, 9)}…` : 'payments off (no Razorpay keys)';
+    console.log(`ShelfSync CMS on http://localhost:${port}  (admin: /admin, ${pay})`);
   });
 }

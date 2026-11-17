@@ -267,15 +267,17 @@ class _BlockEditorScreenState extends ConsumerState<BlockEditorScreen> {
           field(
             'imageUrl',
             'Image link (optional)',
-            hint: 'https://…',
+            hint: 'https://… or /images/banner-rice.jpg',
             keyboard: TextInputType.url,
             validator: (v) {
               final s = (v ?? '').trim();
               if (s.isEmpty) return null;
+              // Photos stored on the CMS itself.
+              if (RegExp(r'^/images/[\w.-]+$').hasMatch(s)) return null;
               final uri = Uri.tryParse(s);
               return uri != null && uri.hasScheme && uri.host.isNotEmpty
                   ? null
-                  : 'Enter a full link starting with https://';
+                  : 'Enter https://… or /images/<file> from the CMS';
             },
           ),
           gap,

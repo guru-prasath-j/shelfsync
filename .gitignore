@@ -9,5 +9,6 @@ app/pubspec.lock
 # Node
 cms/node_modules/
 cms/data/
+cms/.env
 # macOS
 .DS_Store

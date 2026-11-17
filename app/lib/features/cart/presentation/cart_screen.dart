@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../catalog/presentation/catalog_widgets.dart';
+import '../../checkout/presentation/checkout_sheet.dart';
 import '../data/cart_providers.dart';
 import '../domain/cart_models.dart';
 
@@ -254,43 +255,8 @@ class _CheckoutBar extends StatelessWidget {
   const _CheckoutBar({required this.cart});
   final CartState cart;
 
-  void _checkout(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (context) => Padding(
-        padding: const EdgeInsets.fromLTRB(Gap.xl, 0, Gap.xl, Gap.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.payments_outlined,
-              size: 40,
-              color: AppColors.leaf,
-            ),
-            const SizedBox(height: Gap.md),
-            Text(
-              'Payment coming soon',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: Gap.sm),
-            Text(
-              'Your cart of ${cart.itemCount} items (₹${cart.total}) is saved. '
-              'Online payment isn\'t connected yet.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: Gap.lg),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  void _checkout(BuildContext context) =>
+      showCheckoutSheet(context, cart.lines.values.toList());
 
   @override
   Widget build(BuildContext context) {
