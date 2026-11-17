@@ -97,7 +97,11 @@ class BannerBlock extends LayoutBlock {
 }
 
 class CarouselItem {
-  const CarouselItem({required this.title, required this.imageUrl, this.deeplink});
+  const CarouselItem({
+    required this.title,
+    required this.imageUrl,
+    this.deeplink,
+  });
 
   factory CarouselItem.fromJson(Map<String, dynamic> json) => CarouselItem(
         title: json['title'] as String? ?? '',
@@ -153,7 +157,6 @@ class HomeLayout {
   final int schemaVersion;
   final List<LayoutBlock> blocks;
 
-  List<LayoutBlock> visibleBlocks(DateTime now) => blocks
-      .where((b) => b is! UnknownBlock && b.isVisibleAt(now))
-      .toList();
+  List<LayoutBlock> visibleBlocks(DateTime now) =>
+      blocks.where((b) => b is! UnknownBlock && b.isVisibleAt(now)).toList();
 }

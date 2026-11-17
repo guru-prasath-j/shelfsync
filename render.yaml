@@ -1,0 +1,23 @@
+# Render Blueprint: deploys the ShelfSync mock CMS (cms/) as a web service.
+# Dashboard: New -> Blueprint -> pick this repo. Render asks for
+# ADMIN_PASSWORD on first sync (it is never stored in the repo).
+services:
+  - type: web
+    name: shelfsync-cms
+    runtime: node
+    plan: free
+    rootDir: cms
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /api/layout/home
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # First admin password for the hosted CMS. Set it in the dashboard.
+      - key: ADMIN_PASSWORD
+        sync: false
+      # Requests arrive through Render's proxy; key login lockouts on the
+      # forwarded client address instead of the proxy's.
+      - key: TRUST_PROXY
+        value: "1"

@@ -6,7 +6,8 @@ import 'package:shelfsync/features/home/data/layout_repository.dart';
 
 import 'support/fake_adapter.dart';
 
-const _layout = '{"schemaVersion":1,"blocks":[{"id":"n","type":"notice","data":{"text":"Hi"}}]}';
+const _layout =
+    '{"schemaVersion":1,"blocks":[{"id":"n","type":"notice","data":{"text":"Hi"}}]}';
 
 void main() {
   late MemoryStore store;
@@ -16,7 +17,11 @@ void main() {
   setUp(() {
     store = MemoryStore();
     adapter = FakeAdapter((_) => jsonBody(_layout, etag: '"v1"'));
-    api = ApiClient(baseUrl: 'http://cms.test/api/', cache: store, adapter: adapter);
+    api = ApiClient(
+      baseUrl: 'http://cms.test/api/',
+      cache: store,
+      adapter: adapter,
+    );
   });
 
   test('sends If-None-Match and serves the cached body on 304', () async {
@@ -42,7 +47,8 @@ void main() {
     expect(results.every((r) => !r.isStale), isTrue);
   });
 
-  test('layout stream offline: falls back to cache and marks it stale', () async {
+  test('layout stream offline: falls back to cache and marks it stale',
+      () async {
     await api.getJson('layout/home');
     adapter.respond = offline;
 

@@ -32,7 +32,10 @@ void main() {
         ),
       ),
     );
-    await expectLater(find.byType(BannerBlockView), matchesGoldenFile('goldens/banner_block.png'));
+    await expectLater(
+      find.byType(BannerBlockView),
+      matchesGoldenFile('goldens/banner_block.png'),
+    );
   });
 
   testWidgets('notice block', (tester) async {
@@ -40,10 +43,16 @@ void main() {
     await tester.pumpWidget(
       frame(
         const NoticeBlockView(
-          block: NoticeBlock(id: 'n', text: 'Koramangala store open till 11 pm this week.'),
+          block: NoticeBlock(
+            id: 'n',
+            text: 'Koramangala store open till 11 pm this week.',
+          ),
         ),
       ),
     );
-    await expectLater(find.byType(NoticeBlockView), matchesGoldenFile('goldens/notice_block.png'));
+    await expectLater(
+      find.byType(NoticeBlockView),
+      matchesGoldenFile('goldens/notice_block.png'),
+    );
   });
 }

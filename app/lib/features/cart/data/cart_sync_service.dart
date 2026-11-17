@@ -18,7 +18,8 @@ class CartSyncService {
       final res = await _api.postJson('cart/ops', {
         'ops': ops.map((o) => o.toJson()).toList(),
       }) as Map<String, dynamic>;
-      final applied = (res['applied'] as List? ?? const []).cast<String>().toSet();
+      final applied =
+          (res['applied'] as List? ?? const []).cast<String>().toSet();
       await _repo.removeAcknowledged(applied);
       return _repo.pendingOps().isEmpty;
     } on DioException {

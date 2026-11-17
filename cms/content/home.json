@@ -2,9 +2,42 @@
   "schemaVersion": 1,
   "blocks": [
     {
+      "id": "product-grid-1794918680109",
+      "type": "product_grid",
+      "data": {
+        "title": "Rice Festival picks",
+        "productIds": [
+          "p3",
+          "p2",
+          "p5"
+        ]
+      }
+    },
+    {
+      "id": "banner-1794918586381",
+      "type": "banner",
+      "data": {
+        "title": "Mega Rice Festival",
+        "subtitle": "Sona Masoori 5 kg at 349 - save 71",
+        "imageUrl": "",
+        "deeplink": "product/p3"
+      }
+    },
+    {
+      "id": "notice-1794918561065",
+      "type": "notice",
+      "data": {
+        "text": "Rice Festival week: Free delivery above 499"
+      },
+      "startsAt": "2026-11-16T18:30:00.000Z",
+      "endsAt": "2026-11-23T18:29:59.000Z"
+    },
+    {
       "id": "notice-hours",
       "type": "notice",
-      "data": { "text": "Koramangala store open till 11 pm this week." }
+      "data": {
+        "text": "Koramangala store open till 11 pm this week."
+      }
     },
     {
       "id": "banner-weekend",
@@ -22,29 +55,60 @@
       "data": {
         "title": "Shop by category",
         "items": [
-          { "title": "Fruits", "imageUrl": "https://picsum.photos/seed/fruits/300/300", "deeplink": "product/p6" },
-          { "title": "Dairy", "imageUrl": "https://picsum.photos/seed/dairy/300/300", "deeplink": "product/p1" },
-          { "title": "Vegetables", "imageUrl": "https://picsum.photos/seed/veg/300/300", "deeplink": "product/p4" },
-          { "title": "Beverages", "imageUrl": "https://picsum.photos/seed/bev/300/300", "deeplink": "product/p5" }
+          {
+            "title": "Fruits",
+            "imageUrl": "https://picsum.photos/seed/fruits/300/300",
+            "deeplink": "product/p6"
+          },
+          {
+            "title": "Dairy",
+            "imageUrl": "https://picsum.photos/seed/dairy/300/300",
+            "deeplink": "product/p1"
+          },
+          {
+            "title": "Vegetables",
+            "imageUrl": "https://picsum.photos/seed/veg/300/300",
+            "deeplink": "product/p4"
+          },
+          {
+            "title": "Beverages",
+            "imageUrl": "https://picsum.photos/seed/bev/300/300",
+            "deeplink": "product/p5"
+          }
         ]
       }
     },
     {
       "id": "grid-daily",
       "type": "product_grid",
-      "data": { "title": "Daily essentials", "productIds": ["p1", "p4", "p6", "p2"] }
+      "data": {
+        "title": "Daily essentials",
+        "productIds": [
+          "p1",
+          "p4",
+          "p6",
+          "p2"
+        ]
+      }
     },
     {
       "id": "banner-diwali",
       "type": "banner",
       "startsAt": "2026-10-01T00:00:00Z",
       "endsAt": "2026-10-31T23:59:59Z",
-      "data": { "title": "Diwali sweets", "subtitle": "This block is scheduled and has already expired", "imageUrl": "", "deeplink": null }
+      "data": {
+        "title": "Diwali sweets",
+        "subtitle": "This block is scheduled and has already expired",
+        "imageUrl": "",
+        "deeplink": null
+      }
     },
     {
       "id": "future-video",
       "type": "video_reel",
-      "data": { "url": "https://example.com/reel.mp4" }
+      "data": {
+        "url": "https://example.com/reel.mp4"
+      }
     }
   ]
 }

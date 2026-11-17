@@ -35,7 +35,11 @@ void main() {
     adapter = FakeAdapter(offline);
     sync = CartSyncService(
       repo,
-      ApiClient(baseUrl: 'http://cms.test/api/', cache: MemoryStore(), adapter: adapter),
+      ApiClient(
+        baseUrl: 'http://cms.test/api/',
+        cache: MemoryStore(),
+        adapter: adapter,
+      ),
     );
   });
 
@@ -60,7 +64,12 @@ void main() {
     adapter.respond = (o) {
       final body = o.data as Map<String, dynamic>;
       expect((body['ops'] as List).single['type'], 'set');
-      return jsonBody(jsonEncode({'applied': [opId], 'cart': {'p1': 2}}));
+      return jsonBody(
+        jsonEncode({
+          'applied': [opId],
+          'cart': {'p1': 2},
+        }),
+      );
     };
 
     expect(await sync.flush(), isTrue);
@@ -68,7 +77,8 @@ void main() {
     expect(repo.lines()['p1']!.qty, 2);
   });
 
-  test('setting qty to 0 removes the line but still queues the change', () async {
+  test('setting qty to 0 removes the line but still queues the change',
+      () async {
     await repo.setQty(_milk, 1);
     await repo.setQty(_milk, 0);
 

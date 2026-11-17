@@ -20,7 +20,8 @@ final cartSyncServiceProvider = Provider<CartSyncService>(
   ),
 );
 
-final cartProvider = NotifierProvider<CartNotifier, CartState>(CartNotifier.new);
+final cartProvider =
+    NotifierProvider<CartNotifier, CartState>(CartNotifier.new);
 
 class CartNotifier extends Notifier<CartState> {
   CartRepository get _repo => ref.read(cartRepositoryProvider);

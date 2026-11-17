@@ -8,5 +8,6 @@ app/pubspec.lock
 .idea/
 # Node
 cms/node_modules/
+cms/data/
 # macOS
 .DS_Store

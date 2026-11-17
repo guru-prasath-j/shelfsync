@@ -6,14 +6,24 @@ void main() {
     final layout = HomeLayout.fromJson({
       'schemaVersion': 1,
       'blocks': [
-        {'id': 'n', 'type': 'notice', 'data': {'text': 'Open till 11'}},
+        {
+          'id': 'n',
+          'type': 'notice',
+          'data': {'text': 'Open till 11'},
+        },
         {
           'id': 'g',
           'type': 'product_grid',
           'data': {
             'title': 'Daily',
             'products': [
-              {'id': 'p1', 'name': 'Milk', 'unit': '500 ml', 'price': 27, 'mrp': 28},
+              {
+                'id': 'p1',
+                'name': 'Milk',
+                'unit': '500 ml',
+                'price': 27,
+                'mrp': 28,
+              },
             ],
           },
         },

@@ -28,7 +28,8 @@ class CartRepository {
     if (raw == null) return {};
     final map = (jsonDecode(raw) as Map).cast<String, dynamic>();
     return map.map(
-      (k, v) => MapEntry(k, CartLine.fromJson((v as Map).cast<String, dynamic>())),
+      (k, v) =>
+          MapEntry(k, CartLine.fromJson((v as Map).cast<String, dynamic>())),
     );
   }
 
@@ -53,7 +54,8 @@ class CartRepository {
     );
 
     // Coalesce: tapping + five times offline sends one op, not five.
-    final outbox = pendingOps()..removeWhere((op) => op.productId == product.id);
+    final outbox = pendingOps()
+      ..removeWhere((op) => op.productId == product.id);
     outbox.add(
       CartOp(
         opId: _newId(),

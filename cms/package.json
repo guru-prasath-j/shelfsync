@@ -6,7 +6,8 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "reset-password": "node reset-password.js"
   },
   "engines": { "node": ">=20" }
 }

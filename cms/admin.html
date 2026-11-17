@@ -5,38 +5,112 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ShelfSync CMS</title>
 <style>
-  :root { color-scheme: light dark; --leaf: #1F6F43; --ink: #1B1F1A; --muted: #5E6B60; --line: #D5DED7; --bg: #FFFFFF; }
-  @media (prefers-color-scheme: dark) { :root { --ink: #E8EEE9; --muted: #A3B0A6; --line: #2F3A32; --bg: #121613; } }
+  :root { color-scheme: light dark; --leaf: #1F6F43; --ink: #1B1F1A; --muted: #5E6B60; --line: #D5DED7; --bg: #FFFFFF; --err: #C8402A; }
+  @media (prefers-color-scheme: dark) { :root { --ink: #E8EEE9; --muted: #A3B0A6; --line: #2F3A32; --bg: #121613; --err: #FF8A75; } }
   body { margin: 0; font: 15px/1.5 system-ui, sans-serif; color: var(--ink); background: var(--bg); }
   main { max-width: 860px; margin: 0 auto; padding: 24px 16px; }
   h1 { font-size: 22px; margin: 0 0 4px; }
   p { color: var(--muted); margin: 0 0 16px; }
   textarea { width: 100%; box-sizing: border-box; height: 60vh; font: 13px/1.45 ui-monospace, monospace; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: inherit; }
+  input { display: block; width: 100%; max-width: 360px; box-sizing: border-box; margin: 6px 0 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: inherit; font: inherit; }
+  label { font-weight: 600; }
   button { margin-top: 12px; padding: 10px 18px; border: 0; border-radius: 8px; background: var(--leaf); color: #fff; font-weight: 600; cursor: pointer; }
-  button:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
-  #status { margin-left: 12px; color: var(--muted); }
+  button.ghost { background: transparent; color: var(--leaf); border: 1px solid var(--leaf); margin-left: 8px; }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+  #status, .msg { margin-left: 12px; color: var(--muted); }
+  .msg.err { color: var(--err); margin-left: 0; }
+  [hidden] { display: none !important; }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 </style>
 </head>
 <body>
 <main>
-  <h1>Home screen layout</h1>
-  <p>Edit blocks and publish. Apps pick up the change on their next refresh, with no store release.</p>
-  <textarea id="layout" spellcheck="false" aria-label="Home layout JSON"></textarea>
-  <button id="publish">Publish</button><span id="status" role="status"></span>
+  <section id="auth" hidden>
+    <h1 id="auth-title">Admin login</h1>
+    <p id="auth-help">Enter the store admin password.</p>
+    <form id="auth-form">
+      <label for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password" required minlength="8">
+      <div id="confirm-row" hidden>
+        <label for="pw2">Confirm password</label>
+        <input id="pw2" type="password" autocomplete="new-password" minlength="8">
+      </div>
+      <button type="submit" id="auth-btn">Log in</button>
+      <p class="msg err" id="auth-msg" role="alert"></p>
+    </form>
+  </section>
+
+  <section id="editor" hidden>
+    <header>
+      <h1>Home screen layout</h1>
+      <button class="ghost" id="logout" type="button">Log out</button>
+    </header>
+    <p>Edit blocks and publish. Apps pick up the change on their next refresh, with no store release.</p>
+    <textarea id="layout" spellcheck="false" aria-label="Home layout JSON"></textarea>
+    <button id="publish">Publish</button><span id="status" role="status"></span>
+  </section>
 </main>
 <script>
-  const box = document.getElementById('layout');
-  const status = document.getElementById('status');
-  fetch('/api/layout/home').then(r => r.json()).then(j => {
-    // Show the editable source: product grids keep productIds, drop the expanded products.
-    j.blocks.forEach(b => { if (b.type === 'product_grid' && b.data) delete b.data.products; });
-    box.value = JSON.stringify(j, null, 2);
+  const $ = (id) => document.getElementById(id);
+  let token = null;
+  try { token = sessionStorage.getItem('adminToken'); } catch {}
+  let mode = 'login';
+
+  const api = (path, opts = {}) => fetch(path, {
+    ...opts,
+    headers: { ...(opts.headers || {}), ...(token ? { Authorization: 'Bearer ' + token } : {}) },
   });
-  document.getElementById('publish').onclick = async () => {
-    try { JSON.parse(box.value); } catch (e) { status.textContent = 'Invalid JSON: ' + e.message; return; }
-    const r = await fetch('/api/admin/layout/home', { method: 'PUT', body: box.value });
+  const saveToken = (t) => { token = t; try { t ? sessionStorage.setItem('adminToken', t) : sessionStorage.removeItem('adminToken'); } catch {} };
+
+  async function start() {
+    const s = await (await api('/api/admin/status')).json();
+    if (s.loggedIn) return showEditor();
+    saveToken(null);
+    $('auth').hidden = false; $('editor').hidden = true;
+    if (!s.passwordSet && s.canSetup) {
+      mode = 'setup';
+      $('auth-title').textContent = 'Create admin password';
+      $('auth-help').textContent = 'First time here. Pick a password (8+ characters). You will use it in the app and here.';
+      $('auth-btn').textContent = 'Create password';
+      $('confirm-row').hidden = false; $('pw2').required = true;
+      $('pw').autocomplete = 'new-password';
+    } else if (!s.passwordSet) {
+      $('auth-title').textContent = 'Admin not set up';
+      $('auth-help').textContent = 'Set the first admin password from the PC running the CMS (open http://localhost:4000/admin there).';
+      $('auth-form').hidden = true;
+    }
+  }
+
+  $('auth-form').onsubmit = async (e) => {
+    e.preventDefault();
+    $('auth-msg').textContent = '';
+    if (mode === 'setup' && $('pw').value !== $('pw2').value) { $('auth-msg').textContent = 'Passwords don\'t match.'; return; }
+    const r = await api(mode === 'setup' ? '/api/admin/setup' : '/api/admin/login', { method: 'POST', body: JSON.stringify({ password: $('pw').value }) });
+    const j = await r.json();
+    if (!r.ok) { $('auth-msg').textContent = j.error; return; }
+    saveToken(j.token);
+    $('pw').value = ''; $('pw2').value = '';
+    showEditor();
+  };
+
+  async function showEditor() {
+    const r = await api('/api/admin/layout/home');
+    if (r.status === 401) { saveToken(null); return start(); }
+    $('layout').value = JSON.stringify(await r.json(), null, 2);
+    $('auth').hidden = true; $('editor').hidden = false;
+  }
+
+  $('publish').onclick = async () => {
+    const status = $('status');
+    try { JSON.parse($('layout').value); } catch (e) { status.textContent = 'Invalid JSON: ' + e.message; return; }
+    const r = await api('/api/admin/layout/home', { method: 'PUT', body: $('layout').value });
+    if (r.status === 401) { status.textContent = 'Session expired. Log in again.'; saveToken(null); return start(); }
     status.textContent = r.ok ? 'Published.' : 'Publish failed: ' + (await r.json()).error;
   };
+
+  $('logout').onclick = async () => { await api('/api/admin/logout', { method: 'POST' }); saveToken(null); start(); };
+
+  start();
 </script>
 </body>
 </html>

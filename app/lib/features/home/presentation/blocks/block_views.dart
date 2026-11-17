@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../catalog/presentation/catalog_widgets.dart';
+import '../../../catalog/presentation/search_screen.dart'
+    show productGridDelegate;
 import '../../domain/layout_block.dart';
 import '../deeplink.dart';
 
@@ -22,22 +24,36 @@ class NoticeBlockView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: Gap.md, vertical: Gap.md),
       decoration: BoxDecoration(
-        color: AppColors.mint,
-        borderRadius: BorderRadius.circular(10),
+        color: context.palette.warnSoft,
+        borderRadius: BorderRadius.circular(Radii.md),
+        border: Border.all(color: context.palette.warnBorder),
       ),
       child: Row(
         children: [
-          const Icon(Icons.storefront_outlined, color: AppColors.leaf, size: 20),
-          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.campaign_outlined,
+              color: context.palette.warnIcon,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: Gap.md),
           Expanded(
             child: Text(
               block.text,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: const Color(0xFF1B1F1A)),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context.palette.onWarnSoft,
+                    fontWeight: FontWeight.w500,
+                  ),
             ),
           ),
         ],
@@ -52,49 +68,81 @@ class BannerBlockView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: () => openDeeplink(context, block.deeplink),
-        child: AspectRatio(
-          aspectRatio: 12 / 5,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              AppImage(block.imageUrl),
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [Color(0xCC12301F), Color(0x0012301F)],
+    final text = Theme.of(context).textTheme;
+    final hasLink = block.deeplink != null && block.deeplink!.isNotEmpty;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(Radii.lg),
+      child: Material(
+        color: AppColors.leafDark,
+        child: InkWell(
+          onTap: hasLink ? () => openDeeplink(context, block.deeplink) : null,
+          child: AspectRatio(
+            aspectRatio: 12 / 5,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                AppImage(block.imageUrl),
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [Color(0xE612301F), Color(0x0012301F)],
+                      stops: [0.15, 1],
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      block.title,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(color: Colors.white),
-                    ),
-                    if (block.subtitle.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(Gap.lg + 2),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                       Text(
-                        block.subtitle,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(color: Colors.white),
+                        block.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: text.titleLarge?.copyWith(
+                          color: Colors.white,
+                          height: 1.15,
+                        ),
                       ),
-                  ],
+                      if (block.subtitle.isNotEmpty) ...[
+                        const SizedBox(height: Gap.xs),
+                        Text(
+                          block.subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: text.bodySmall?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                        ),
+                      ],
+                      if (hasLink) ...[
+                        const SizedBox(height: Gap.md),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: Gap.md,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            'Shop now',
+                            style: text.labelMedium?.copyWith(
+                              color: AppColors.leaf,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -111,26 +159,33 @@ class CarouselBlockView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionTitle(block.title),
+        SectionTitle(block.title),
         SizedBox(
-          height: 112,
+          height: 108,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
             itemCount: block.items.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, __) => const SizedBox(width: Gap.md),
             itemBuilder: (context, i) {
               final item = block.items[i];
               return InkWell(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
                 onTap: () => openDeeplink(context, item.deeplink),
                 child: SizedBox(
-                  width: 80,
+                  width: 76,
                   child: Column(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: SizedBox.square(
-                          dimension: 80,
+                      Container(
+                        width: 76,
+                        height: 76,
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: context.palette.accentSoft,
+                          borderRadius: BorderRadius.circular(Radii.lg),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(Radii.lg - 3),
                           child: AppImage(item.imageUrl),
                         ),
                       ),
@@ -139,7 +194,8 @@ class CarouselBlockView extends StatelessWidget {
                         item.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelLarge,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelMedium,
                       ),
                     ],
                   ),
@@ -162,17 +218,13 @@ class ProductGridBlockView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionTitle(block.title),
+        SectionTitle(block.title),
         GridView.builder(
           shrinkWrap: true,
+          padding: EdgeInsets.zero,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: block.products.length,
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 220,
-            mainAxisExtent: 360,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
+          gridDelegate: productGridDelegate,
           itemBuilder: (context, i) {
             final product = block.products[i];
             return ProductCard(
@@ -186,16 +238,24 @@ class ProductGridBlockView extends StatelessWidget {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
+class SectionTitle extends StatelessWidget {
+  const SectionTitle(this.text, {super.key, this.trailing});
   final String text;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
     if (text.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(text, style: Theme.of(context).textTheme.titleMedium),
+      padding: const EdgeInsets.only(bottom: Gap.md),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(text, style: Theme.of(context).textTheme.titleMedium),
+          ),
+          if (trailing != null) trailing!,
+        ],
+      ),
     );
   }
 }

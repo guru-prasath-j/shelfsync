@@ -20,10 +20,29 @@ class CatalogRepository {
       rethrow;
     }
   }
+
+  /// Whole catalogue for search; same network-first, cache-fallback rule.
+  Future<List<Product>> all() async {
+    const path = 'products';
+    List<Product> parse(Object? json) => (json as List)
+        .map((e) => Product.fromJson((e as Map).cast<String, dynamic>()))
+        .toList();
+    try {
+      return parse(await _api.getJson(path));
+    } catch (_) {
+      final cached = _api.cachedJson(path);
+      if (cached is List) return parse(cached);
+      rethrow;
+    }
+  }
 }
 
 final catalogRepositoryProvider = Provider<CatalogRepository>(
   (ref) => CatalogRepository(ref.watch(apiClientProvider)),
+);
+
+final allProductsProvider = FutureProvider.autoDispose<List<Product>>(
+  (ref) => ref.watch(catalogRepositoryProvider).all(),
 );
 
 final productProvider = FutureProvider.autoDispose.family<Product, String>(
