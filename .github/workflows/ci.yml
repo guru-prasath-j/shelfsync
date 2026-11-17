@@ -16,6 +16,11 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # Pinned to the version the app is developed on. Newer stable
+          # (3.47+) deprecates package:flutter/material.dart in favour of
+          # package:material_ui, which this SDK doesn't have yet; bump both
+          # together when migrating.
+          flutter-version: 3.41.7
           cache: true
       - run: flutter pub get
       - run: flutter analyze
