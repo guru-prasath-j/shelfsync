@@ -13,6 +13,67 @@ const CONTENT_DIR = process.env.CONTENT_DIR || path.join(__dirname, 'content');
 // Admin password hash lives outside content/ and is git-ignored.
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const AUTH_FILE = () => path.join(DATA_DIR, 'admin.json');
+// Flutter web build of the shopper app (copied from app/build/web). When it
+// exists the CMS serves the app at "/", same origin as /api, so no CORS.
+const WEB_DIR = path.resolve(process.env.WEB_DIR || path.join(__dirname, 'web'));
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.wasm': 'application/wasm',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.otf': 'font/otf',
+  '.ttf': 'font/ttf',
+  '.woff2': 'font/woff2',
+  '.bin': 'application/octet-stream',
+  '.frag': 'application/octet-stream',
+};
+
+/// Serves a file from WEB_DIR; unknown extension-less paths fall back to
+/// index.html (app routes). Returns false when there is no web build.
+function serveWeb(req, res, p) {
+  const index = path.join(WEB_DIR, 'index.html');
+  if (!fs.existsSync(index)) return false;
+  let rel;
+  try {
+    rel = decodeURIComponent(p);
+  } catch {
+    res.writeHead(400);
+    res.end();
+    return true;
+  }
+  let file = path.join(WEB_DIR, rel);
+  if (file !== WEB_DIR && !file.startsWith(WEB_DIR + path.sep)) {
+    res.writeHead(403);
+    res.end();
+    return true;
+  }
+  const isFile = fs.existsSync(file) && fs.statSync(file).isFile();
+  if (!isFile) {
+    if (path.extname(rel)) {
+      res.writeHead(404);
+      res.end();
+      return true;
+    }
+    file = index;
+  }
+  res.writeHead(200, {
+    'Content-Type': MIME[path.extname(file)] || 'application/octet-stream',
+    // index.html must revalidate so a new deploy is picked up; assets can cache briefly.
+    'Cache-Control': file === index ? 'no-cache' : 'public, max-age=3600',
+  });
+  if (req.method === 'HEAD') {
+    res.end();
+  } else {
+    fs.createReadStream(file).pipe(res);
+  }
+  return true;
+}
 
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // stay logged in for a working day
 const MAX_FAILURES = 5;
@@ -201,13 +262,16 @@ function createServer() {
       if (req.method === 'GET' && p === '/api/cart') {
         return sendJson(req, res, 200, Object.fromEntries([...cart].map(([k, v]) => [k, v.qty])));
       }
-      if (req.method === 'GET' && p === '/') {
-        res.writeHead(302, { Location: '/admin' });
-        return res.end();
-      }
       if (req.method === 'GET' && p === '/admin') {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         return res.end(fs.readFileSync(path.join(__dirname, 'admin.html')));
+      }
+      if (p.startsWith('/api/')) return sendJson(req, res, 404, { error: 'Not found' });
+      if ((req.method === 'GET' || req.method === 'HEAD') && serveWeb(req, res, p)) return;
+      if (req.method === 'GET' && p === '/') {
+        // No web build present (e.g. local dev): the JSON admin page instead.
+        res.writeHead(302, { Location: '/admin' });
+        return res.end();
       }
       return sendJson(req, res, 404, { error: 'Not found' });
     } catch (err) {

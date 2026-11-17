@@ -8,6 +8,13 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shelfsync-'));
 for (const f of ['home.json', 'products.json']) fs.copyFileSync(path.join(__dirname, 'content', f), path.join(tmp, f));
 process.env.CONTENT_DIR = tmp;
 process.env.DATA_DIR = path.join(tmp, 'data');
+const web = path.join(tmp, 'web');
+fs.mkdirSync(path.join(web, 'assets'), { recursive: true });
+fs.writeFileSync(path.join(web, 'index.html'), '<!doctype html><title>ShelfSync app</title>');
+fs.writeFileSync(path.join(web, 'main.dart.js'), 'console.log(1)');
+fs.writeFileSync(path.join(web, 'assets', 'logo.png'), 'png');
+fs.writeFileSync(path.join(tmp, 'secret.txt'), 'outside web dir');
+process.env.WEB_DIR = web;
 const { createServer } = require('./server');
 
 const json = (body) => ({ method: 'POST', body: JSON.stringify(body) });
@@ -138,6 +145,24 @@ test('five wrong passwords lock login for a minute', async () => {
   }
   const locked = await fetch(`${base}/api/admin/login`, json({ password: 'new-pass-99' }));
   assert.strictEqual(locked.status, 429);
+});
+
+test('serves the web app at / with app-route fallback, and stays inside WEB_DIR', async () => {
+  const root = await fetch(`${base}/`);
+  assert.strictEqual(root.status, 200);
+  assert.match(root.headers.get('content-type'), /text\/html/);
+  assert.match(await root.text(), /ShelfSync app/);
+
+  const js = await fetch(`${base}/main.dart.js`);
+  assert.strictEqual(js.status, 200);
+  assert.match(js.headers.get('content-type'), /javascript/);
+
+  assert.strictEqual((await fetch(`${base}/assets/logo.png`)).headers.get('content-type'), 'image/png');
+  assert.match(await (await fetch(`${base}/cart`)).text(), /ShelfSync app/, 'app route falls back to index.html');
+  assert.strictEqual((await fetch(`${base}/missing.js`)).status, 404);
+  assert.strictEqual((await fetch(`${base}/api/nope`)).status, 404, 'unknown API stays JSON 404');
+  assert.notStrictEqual((await fetch(`${base}/%2e%2e/secret.txt`)).status, 200, 'no path traversal');
+  assert.strictEqual((await fetch(`${base}/admin`)).status, 200, 'admin page still served');
 });
 
 test('cart ops are idempotent and last-write-wins', async () => {

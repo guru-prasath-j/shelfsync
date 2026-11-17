@@ -64,6 +64,11 @@ shelfsync/
 
 ## Deploy the CMS on Render
 
+The CMS also serves the shopper app's Flutter web build from `cms/web/` at
+`/` (same origin as `/api/`, so no CORS; the JSON layout editor stays at
+`/admin`). Render has no Flutter, so the build is committed: after changing
+the app, run `cd cms && npm run build-web` and commit `cms/web/`.
+
 `render.yaml` is a Render Blueprint for the CMS. In the Render dashboard:
 **New → Blueprint →** pick this repo, and enter `ADMIN_PASSWORD` when asked
 (it is never committed). On a hosted server the first-time setup screen is

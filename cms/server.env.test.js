@@ -12,6 +12,7 @@ process.env.CONTENT_DIR = tmp;
 process.env.DATA_DIR = path.join(tmp, 'data');
 process.env.ADMIN_PASSWORD = 'from-env-secret';
 process.env.TRUST_PROXY = '1';
+process.env.WEB_DIR = path.join(tmp, 'no-web-build'); // root falls back to /admin
 const { createServer } = require('./server');
 
 let server, base;
