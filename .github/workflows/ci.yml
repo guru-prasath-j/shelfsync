@@ -13,6 +13,12 @@ jobs:
         working-directory: app
     steps:
       - uses: actions/checkout@v4
+      # The runner's default JDK (25) is newer than the Android Gradle
+      # toolchain understands; build with an LTS JDK it supports.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
